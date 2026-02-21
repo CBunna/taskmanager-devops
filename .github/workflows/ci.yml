@@ -27,7 +27,7 @@ jobs:
                   cd backend
                   npm run lint || echo "Lint completed"
 
-            - name: Install frontedn dependenies
+            - name: Install frontend dependencies
               run: |
                   cd frontend
                   npm install
