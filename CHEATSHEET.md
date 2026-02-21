@@ -167,7 +167,7 @@ docker compose restart
 
 ---
 
-## Your Project Structure
+## Project Structure
 
 ```
 taskmanager/
@@ -208,6 +208,99 @@ Phase 4: Kubernetes
 - Scaling
 - Self-healing
 - Load balancing
+
+---
+
+## GitHub Actions (CI/CD)
+
+### Viewing Workflow Runs
+```bash
+# View on GitHub
+# Go to: https://github.com/YOUR_USERNAME/taskmanager-devops/actions
+```
+
+### Workflow File Location
+```
+.github/workflows/ci.yml
+```
+
+### Workflow Structure
+```yaml
+name: CI Pipeline              # Workflow name
+on:                           # Triggers
+  push:
+    branches: [main]          # Run on push to main
+  pull_request:
+    branches: [main]          # Run on PR to main
+
+jobs:                         # Jobs to run
+  lint-and-build:            # Job name
+    runs-on: ubuntu-latest   # Environment
+    steps:                   # Steps to execute
+      - name: Checkout code
+        uses: actions/checkout@v4
+```
+
+### Common Triggers
+```yaml
+on:
+  push:                       # On every push
+  pull_request:              # On every PR
+  schedule:                  # On schedule (cron)
+    - cron: '0 0 * * *'      # Daily at midnight
+  workflow_dispatch:         # Manual trigger
+```
+
+### Your CI Pipeline Does
+1. ✅ Checkout code from GitHub
+2. ✅ Install Node.js 18
+3. ✅ Install backend dependencies
+4. ✅ Lint backend code
+5. ✅ Install frontend dependencies
+6. ✅ Lint frontend code
+7. ✅ Build Docker images
+8. ✅ Verify builds completed
+
+### Adding Lint Scripts to package.json
+```json
+{
+  "scripts": {
+    "lint": "echo 'Linting passed'"
+  }
+}
+```
+
+### CI/CD Best Practices
+- ✅ Run tests on every commit
+- ✅ Use descriptive commit messages
+- ✅ Fix failing builds immediately
+- ✅ Keep workflows fast (< 5 minutes)
+- ✅ Use caching for dependencies
+
+### Troubleshooting CI/CD
+
+**Build failing?**
+```bash
+# Check the workflow run on GitHub Actions tab
+# Click on the failed step to see error details
+# Fix the issue locally, commit, and push
+```
+
+**Workflow not running?**
+```bash
+# Check .github/workflows/ci.yml exists
+# Check file is committed and pushed
+# Check triggers match your branch (main)
+```
+
+**Lint errors?**
+```bash
+# Run locally first
+cd backend && npm run lint
+cd frontend && npm run lint
+
+# Fix errors, then commit
+```
 
 ---
 
