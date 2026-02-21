@@ -1,0 +1,66 @@
+# ============================================
+# Task Manager - Production .gitignore
+# ============================================
+
+# Dependencies
+node_modules/
+npm-debug.log*
+yarn-error.log*
+
+# Environment variables - NEVER COMMIT SECRETS
+.env
+.env.local
+.env.production
+.env.*.local
+
+# Logs
+logs/
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db
+._*
+
+# IDE
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
+.idea/
+*.swp
+*.swo
+
+# Build outputs
+dist/
+build/
+.cache/
+
+# Testing
+coverage/
+.nyc_output/
+
+# Docker
+docker-compose.override.yml
+
+# Terraform
+**/.terraform/*
+*.tfstate
+*.tfstate.*
+*.tfvars
+!*.example.tfvars
+
+# Kubernetes secrets
+k8s/secrets/
+*-secret.yaml
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+
+# Security - NEVER COMMIT
+**/secrets/
+**/*secret*
+**/*password*
+**/*credentials*
+**/private-key*
