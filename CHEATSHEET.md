@@ -304,4 +304,298 @@ cd frontend && npm run lint
 
 ---
 
+## Kubernetes (k8s)
+
+### Cluster Management
+```bash
+minikube start                  # Start local Kubernetes cluster
+minikube stop                   # Stop cluster
+minikube status                 # Check cluster status
+minikube dashboard              # Open Kubernetes dashboard in browser
+minikube delete                 # Delete cluster completely
+```
+
+### Pod Management
+```bash
+kubectl get pods                # List all pods
+kubectl get pods -o wide        # List pods with more details (IP, node)
+kubectl get pods -l app=backend # List pods with specific label
+kubectl describe pod <pod-name> # Detailed info about a pod
+kubectl logs <pod-name>         # View pod logs
+kubectl logs <pod-name> -f      # Follow pod logs (Ctrl+C to stop)
+kubectl logs -l app=backend     # View logs for all pods with label
+kubectl logs <pod-name> --tail=50  # Last 50 lines of logs
+kubectl delete pod <pod-name>   # Delete a pod (will restart if in deployment)
+```
+
+### Deployment Management
+```bash
+kubectl get deployments         # List all deployments
+kubectl describe deployment <name>  # Detailed deployment info
+kubectl scale deployment <name> --replicas=3  # Scale to 3 replicas
+kubectl rollout status deployment <name>      # Check rollout status
+kubectl rollout history deployment <name>     # View rollout history
+kubectl rollout undo deployment <name>        # Rollback to previous version
+```
+
+### Service Management
+```bash
+kubectl get services            # List all services (or kubectl get svc)
+kubectl describe service <name> # Detailed service info
+kubectl get endpoints           # Show service endpoints (pod IPs)
+minikube service <name> --url   # Get URL to access NodePort service
+minikube service <name>         # Open service in browser
+```
+
+### Apply & Delete Resources
+```bash
+kubectl apply -f <file.yaml>    # Create/update resource from file
+kubectl apply -f k8s/           # Apply all YAML files in directory
+kubectl delete -f <file.yaml>   # Delete resource defined in file
+kubectl delete pod <name>       # Delete specific pod
+kubectl delete deployment <name>  # Delete deployment and its pods
+kubectl delete service <name>   # Delete service
+kubectl delete all --all        # Delete all resources (DANGEROUS!)
+```
+
+### Execute Commands in Pods
+```bash
+kubectl exec <pod-name> -- <command>           # Run command in pod
+kubectl exec <pod-name> -- npm run migrate     # Run migration
+kubectl exec <pod-name> -- ls -la              # List files in pod
+kubectl exec -it <pod-name> -- sh              # Interactive shell in pod
+kubectl exec -it <pod-name> -- /bin/bash       # Bash shell (if available)
+```
+
+### Describe & Debug
+```bash
+kubectl describe pod <name>     # See events, state, and errors
+kubectl describe node minikube  # See node information
+kubectl get events              # List recent cluster events
+kubectl get events --sort-by='.lastTimestamp'  # Sort by time
+```
+
+### Working with Minikube Docker
+```bash
+eval $(minikube docker-env)     # Point Docker CLI to Minikube's Docker
+docker images                   # List images in Minikube
+docker compose build            # Build images in Minikube's Docker
+eval $(minikube docker-env -u)  # Unset (back to host Docker)
+```
+
+---
+
+## Kubernetes Architecture
+
+### Key Concepts
+- **Pod** = Smallest unit, wraps one or more containers
+- **Deployment** = Manages pod replicas, rolling updates, self-healing
+- **Service** = Stable network endpoint to access pods
+- **Label** = Key-value tag on resources (app: backend)
+- **Selector** = How services find pods (matchLabels)
+
+### Service Types
+- **ClusterIP** (default) = Internal only, other pods can access
+- **NodePort** = Exposes service on node's port (30000-32767)
+- **LoadBalancer** = Cloud provider load balancer (AWS ELB, etc.)
+
+### Labels & Selectors
+```yaml
+# Deployment creates pods with labels
+metadata:
+  labels:
+    app: backend
+
+# Service finds pods using selector
+spec:
+  selector:
+    app: backend
+```
+
+### DNS-based Service Discovery
+- Pods can reach services by name
+- Example: `postgres:5432`, `redis:6379`, `backend:5000`
+- Format: `<service-name>:<port>`
+
+---
+
+## Common Kubernetes Workflows
+
+### Deploy entire application
+```bash
+# Apply all manifests
+kubectl apply -f k8s/
+
+# Check if all pods are running
+kubectl get pods
+
+# Check services
+kubectl get services
+
+# View logs for troubleshooting
+kubectl logs -l app=backend
+```
+
+### Update application after code change
+```bash
+# Build new images in Minikube
+eval $(minikube docker-env)
+docker compose build
+
+# Restart deployments to use new images
+kubectl rollout restart deployment backend
+kubectl rollout restart deployment frontend
+
+# Watch rollout status
+kubectl rollout status deployment backend
+```
+
+### Initialize database
+```bash
+# Get backend pod name
+kubectl get pods -l app=backend
+
+# Run migrations
+kubectl exec <backend-pod-name> -- npm run migrate
+
+# Seed demo data
+kubectl exec <backend-pod-name> -- npm run seed
+```
+
+### Scale application
+```bash
+# Scale backend to 3 replicas
+kubectl scale deployment backend --replicas=3
+
+# Verify scaling
+kubectl get pods -l app=backend
+
+# Scale back to 1
+kubectl scale deployment backend --replicas=1
+```
+
+### Access frontend application
+```bash
+# Get service URL (keeps terminal open)
+minikube service frontend --url
+
+# Or open in browser directly
+minikube service frontend
+```
+
+### Clean up everything
+```bash
+# Delete all resources
+kubectl delete -f k8s/
+
+# Or delete specific deployments
+kubectl delete deployment postgres redis backend frontend
+kubectl delete service postgres redis backend frontend
+
+# Verify deletion
+kubectl get all
+```
+
+---
+
+## Kubernetes Troubleshooting
+
+### Pod won't start
+```bash
+# Check pod status
+kubectl get pods
+
+# See detailed events and errors
+kubectl describe pod <pod-name>
+
+# Check logs
+kubectl logs <pod-name>
+
+# Common issues:
+# - ImagePullBackOff: Image not found (use imagePullPolicy: Never for local)
+# - CrashLoopBackOff: Container keeps crashing (check logs)
+# - Pending: Resource constraints or scheduling issues
+```
+
+### Service not accessible
+```bash
+# Check if service exists
+kubectl get services
+
+# Check if service has endpoints (pods)
+kubectl get endpoints
+
+# Verify labels match
+kubectl get pods --show-labels
+kubectl describe service <service-name>
+
+# For NodePort, get URL
+minikube service <service-name> --url
+```
+
+### Database connection errors
+```bash
+# Check if postgres pod is running
+kubectl get pods -l app=postgres
+
+# Check postgres logs
+kubectl logs -l app=postgres
+
+# Verify service exists
+kubectl get service postgres
+
+# Check if database is initialized
+kubectl exec <backend-pod> -- npm run migrate
+kubectl exec <backend-pod> -- npm run seed
+```
+
+### Image not found in Minikube
+```bash
+# Make sure to build in Minikube's Docker
+eval $(minikube docker-env)
+docker compose build
+
+# Verify images exist
+docker images | grep taskmanager
+
+# In manifests, use imagePullPolicy: Never
+```
+
+---
+
+## Your Kubernetes Setup
+
+### Deployments
+- **postgres**: PostgreSQL database (1 replica, emptyDir storage)
+- **redis**: Redis cache (1 replica)
+- **backend**: Node.js API (1 replica, connects to postgres & redis)
+- **frontend**: React app (1 replica, nginx)
+
+### Services
+- **postgres**: ClusterIP on port 5432 (internal only)
+- **redis**: ClusterIP on port 6379 (internal only)
+- **backend**: ClusterIP on port 5000 (internal only)
+- **frontend**: NodePort on port 30080 (accessible via minikube service)
+
+### Manifest Files
+```
+k8s/
+├── postgres.yaml   # PostgreSQL deployment + service
+├── redis.yaml      # Redis deployment + service
+├── backend.yaml    # Backend deployment + service
+└── frontend.yaml   # Frontend deployment + service
+```
+
+### Access Your App
+```bash
+# Frontend (via Minikube)
+minikube service frontend --url
+
+# Demo credentials
+john@example.com / password123
+jane@example.com / password123
+```
+
+---
+
 **Generated by your DevOps learning journey on 2026-02-21**

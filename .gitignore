@@ -64,3 +64,4 @@ temp/
 **/*password*
 **/*credentials*
 **/private-key*
+k8s/*-secret.yaml
